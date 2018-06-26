@@ -10,6 +10,10 @@ export const loaded = new Promise((resolve, reject) => { // eslint-disable-line 
   window['vueGoogleMapsInit'] = resolve
 })
 
+const defaultShouldAvoidLoad = () => {
+  return typeof document === 'undefined'
+}
+
 /**
  * @param apiKey    API Key, or object with the URL parameters. For example
  *                  to use Google Maps Premium API, pass
@@ -39,10 +43,15 @@ export const loaded = new Promise((resolve, reject) => { // eslint-disable-line 
  * ```
  */
 export const load = (options, loadCn) => {
-  if (typeof document === 'undefined') {
+  const {shouldAvoidLoad = defaultShouldAvoidLoad} = options
+  if (shouldAvoidLoad()) {
     // Do nothing if run from server-side
     return
   }
+  const {appendTo = document.head} = options
+  delete options['shouldAvoidLoad']
+  delete options['appendTo']
+
   if (!setUp) {
     const googleMapScript = document.createElement('SCRIPT')
 
@@ -74,7 +83,8 @@ export const load = (options, loadCn) => {
     googleMapScript.setAttribute('src', url)
     googleMapScript.setAttribute('async', '')
     googleMapScript.setAttribute('defer', '')
-    document.head.appendChild(googleMapScript)
+
+    appendTo.appendChild(googleMapScript)
   } else {
     throw new Error('You already started the loading of google maps')
   }
